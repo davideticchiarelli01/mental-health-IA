@@ -15,11 +15,11 @@ create_datasets :-
     length(TrainingData, TrainingSize),
     append(TrainingData, TestData, ShuffledData),
 
-    tell('taining_set.pl'),
+    tell('training_set.pl'),
     write_data(TrainingData, e),
     told,
 
-    tell('test_Set.pl'),
+    tell('test_set.pl'),
     write_data(TestData, s),
     told.
 
@@ -41,7 +41,7 @@ write_entry(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_We
     call(Type, 'anxiety', Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, Physical_Activity, Sleep_Quality, Region).
 
 
-e(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, Work_Life_Balance, Stress_Level, Label, Social_Isolation, Satisfaction_with_Remote_Work, Physical_Activity, Sleep_Quality, Region) :-
+e(Label, Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, Physical_Activity, Sleep_Quality, Region) :-
     write('e('), write(Label), write(',['),
     write('age = '), writeq(Age), write(', '),
     write('gender = '), writeq(Gender), write(', '),
@@ -56,7 +56,7 @@ e(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, Work_L
     write('satisfaction_with_remote_work = '), writeq(Satisfaction_with_Remote_Work), write(', '),
     write('physical_activity = '), writeq(Physical_Activity), write(', '),
     write('sleep_quality = '), writeq(Sleep_Quality), write(', '),
-    write('region = '), writeq(Region), writeln(']).').
+    write('region = '), writeq(Region), writeln(']).'). 
 
 s(Label, Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, Physical_Activity, Sleep_Quality, Region) :-
     write('s('), write(Label), write(',['),

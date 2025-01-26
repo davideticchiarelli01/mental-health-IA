@@ -1,128 +1,202 @@
-:- ensure_loaded('database_cleaned').
 
-create_datasets :-
-    % Recupera tutti i dati e rimuove i duplicati
-    findall(
-        aa(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-           Work_Life_Balance, Stress_Level, Mental_Health_Condition, Social_Isolation, 
-           Satisfaction_with_Remote_Work, Physical_Activity, Sleep_Quality, Region),
-        aa(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-           Work_Life_Balance, Stress_Level, Mental_Health_Condition, Social_Isolation, 
-           Satisfaction_with_Remote_Work, Physical_Activity, Sleep_Quality, Region),
-        AllData
-    ),
-    sort(AllData, UniqueData),
+:- ensure_loaded(attributes).
+:- ensure_loaded(training_set).
+:- ensure_loaded(test_set).
 
-    % Raggruppa i dati in base alla colonna "Mental_Health_Condition"
-    group_by_label(UniqueData, GroupedData),
+:- op(300,xfx,<==).
 
-    % Dividi ogni gruppo in training e test
-    divide_groups(GroupedData, TrainingGroups, TestGroups),
 
-    % Appiattisci i gruppi per ottenere i dataset finali
-    flatten(TrainingGroups, TrainingData),
-    flatten(TestGroups, TestData),
+apprendi(Classe) :-
+	findall( e(C,O), e(C,O), Esempi),      % raccoglie  gli Esempi
+	apprendi(Esempi, Classe, Descrizione), % induce la Descrizione della Classe
+	nl,write(Classe),write('<=='),nl,      % la stampa
+	writelist(Descrizione),
+	assert( Classe <== Descrizione ).      % e la asserisce, ovvero APPRENDE
 
-    % Scrivi il training set
-    tell('ds_training.pl'),
-    write_data(TrainingData, e),
-    told,
+apprendi( Esempi, Classe, []) :-                % Descrizione vuota perché non ci sono
+	\+ member( e(Classe,_), Esempi ).       % esempi da coprire di quella Classe
+apprendi( Esempi, Classe, [Cong|Congi] ) :-
+	apprendi_cong( Esempi, Classe, Cong),   % induce una Cong di coppie Attr=Val che copre
+						% almeno un esempio di Classe e nessun esempio
+						% di una qualunque altra classe
+	rimuovi( Esempi, Cong, RestoEsempi ),   % rimuove gli esempi coperti da Cong
+	apprendi( RestoEsempi, Classe, Congi ). % copre gli esempi rimasti
 
-    % Scrivi il test set
-    tell('ds_test.pl'),
-    write_data(TestData, s),
-    told.
+apprendi_cong( Esempi, Classe, []) :-
+	\+ (member( e(Cl,_), Esempi), Cl \== Classe),
+	!.	                               % non ci sono esempi di altre classi
+apprendi_cong( Esempi, Cl, [Cond|Conds] ) :-
+	scegli_cond( Esempi, Cl, Cond ),       % sceglie una coppia Attr=Val
+	filtra( Esempi, [Cond], Esempi1 ),     % seleziona in Esempi1 quelli che hanno Attr=Val
+	apprendi_cong( Esempi1, Cl, Conds ).
 
-% Raggruppa i record in base alla colonna "Mental_Health_Condition"
-group_by_label(Records, Grouped) :-
-    % Trova tutte le etichette uniche
-    findall(Label, member(aa(_, _, _, _, _, _, _, _, _, Label, _, _, _, _, _), Records), Labels),
-    sort(Labels, UniqueLabels),  % Elimina duplicati
-    % Raggruppa i record per ogni etichetta
-    findall(
-        Group,
-        (
-            member(Label, UniqueLabels),  % Per ogni etichetta
-            include(has_label(Label), Records, Group)  % Filtra i record con quell'etichetta
-        ),
-        Grouped
-    ).
+scegli_cond( Esempi, Classe, AttVal) :-
+	findall( AV/Punti, punteggioAV(Esempi,Classe,AV,Punti), AVs),
+	best( AVs, AttVal).
 
-% Predicato di supporto per filtrare i record con una specifica etichetta
-has_label(Label, aa(_, _, _, _, _, _, _, _, _, Label, _, _, _, _, _)).
+best([AttVal/_],AttVal).
+best([AV0/S0,AV1/S1|AVSlist],AttVal) :-
+	S1 > S0, !,    % AV1 è meglio di AV0
+	best([AV1/S1|AVSlist],AttVal)
+	;
+	best([AV0/S0|AVSlist],AttVal).
 
-% Dividi ogni gruppo in training e test
-divide_groups([], [], []).
-divide_groups([Group | RestGroups], [Train | RestTrain], [Test | RestTest]) :-
-    length(Group, Total),
-    TrainingSize is round(0.7 * Total),  % 70% per il training
-    length(Train, TrainingSize),
-    random_permutation(Group, Shuffled),  % Mescola i record
-    append(Train, Test, Shuffled),  % Dividi in training e test
-    divide_groups(RestGroups, RestTrain, RestTest).
+filtra(Esempi,Cond,Esempi1) :-
+	findall(e(Classe,Ogg), (member(e(Classe,Ogg),Esempi),soddisfa(Ogg,Cond)), Esempi1).
 
-% Scrive i dati nei file
-write_data([], _).
-write_data([aa(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-               Work_Life_Balance, Stress_Level, Mental_Health_Condition, Social_Isolation, 
-               Satisfaction_with_Remote_Work, Physical_Activity, Sleep_Quality, Region) | Rest], Type) :-
-    write_entry(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-                Work_Life_Balance, Stress_Level, Mental_Health_Condition, Social_Isolation, 
-                Satisfaction_with_Remote_Work, Physical_Activity, Sleep_Quality, Region, Type),
-    write_data(Rest, Type).
+rimuovi([],_,[]).
+rimuovi([e(_,Ogg)|Es],Conge,Es1) :-
+	soddisfa(Ogg,Conge), !, % il primo esempio matcha Conge
+	rimuovi(Es,Conge,Es1).  % lo rimuove
 
-% Scrive un singolo record
-write_entry(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-            Work_Life_Balance, Stress_Level, 'Unknown', Social_Isolation, Satisfaction_with_Remote_Work, 
-            Physical_Activity, Sleep_Quality, Region, Type) :-
-    call(Type, 'unknown', Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-         Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, 
-         Physical_Activity, Sleep_Quality, Region).
+rimuovi([E|Es],Conge,[E|Es1]) :- % mantiene il primo esempio
+	rimuovi(Es,Conge,Es1).
 
-write_entry(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-            Work_Life_Balance, Stress_Level, 'Burnout', Social_Isolation, Satisfaction_with_Remote_Work, 
-            Physical_Activity, Sleep_Quality, Region, Type) :-
-    call(Type, 'burnout', Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-         Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, 
-         Physical_Activity, Sleep_Quality, Region).
+soddisfa( Oggetto, Congiunzione) :-
+%	hanno_attributo_in_comune(Oggetto,Congiunzione),
+	\+ (member(Att=Valx,Congiunzione), member(Att=Valy,Oggetto), Valx \== Valy).
 
-write_entry(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-            Work_Life_Balance, Stress_Level, 'Depression', Social_Isolation, Satisfaction_with_Remote_Work, 
-            Physical_Activity, Sleep_Quality, Region, Type) :-
-    call(Type, 'depression', Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-         Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, 
-         Physical_Activity, Sleep_Quality, Region).
+hanno_attributo_in_comune(Oggetto,Congiunzione) :-
+	member(Att=_,Congiunzione),
+	member(Att=_,Oggetto),
+	!.
 
-write_entry(Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-            Work_Life_Balance, Stress_Level, 'Anxiety', Social_Isolation, Satisfaction_with_Remote_Work, 
-            Physical_Activity, Sleep_Quality, Region, Type) :-
-    call(Type, 'anxiety', Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-         Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, 
-         Physical_Activity, Sleep_Quality, Region).
+punteggioAV( Esempi, Classe, AttVal, Punti ) :-
+	candidato( Esempi, Classe, AttVal),  % un attributo/valore adatto
+	filtra(Esempi,[AttVal],Esempi1),  % gli Esempi1 soddisfano la condizione Att=Val
+	length(Esempi1,N1),
+	conta_pos(Esempi1,Classe,Npos1),  % numero di esempi positivi
+	Npos1 > 0,                        % almeno un esempio positivo
+	Punti is (Npos1 + 1) / (N1 + 2).
 
-% Scrittura nei file (formato specifico)
-e(Label, Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-  Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, 
-  Physical_Activity, Sleep_Quality, Region) :-
-    write('e('), write(Label), write(',['),
-    write('age = '), writeq(Age), write(', '),
-    write('gender = '), writeq(Gender), write(', '),
-    write('role = '), writeq(Role), write(', '),
-    write('industry = '), writeq(Industry), write(', '),
-    write('yoe = '), writeq(Yoe), write(', '),
-    write('work_location = '), writeq(Work_location), write(', '),
-    write('hours_worked_per_week = '), writeq(Hours_Worked_Per_Week), write(', '),
-    write('work_life_balance = '), writeq(Work_Life_Balance), write(', '),
-    write('stress_level = '), writeq(Stress_Level), write(', '),
-    write('social_isolation = '), writeq(Social_Isolation), write(', '),
-    write('satisfaction_with_remote_work = '), writeq(Satisfaction_with_Remote_Work), write(', '),
-    write('physical_activity = '), writeq(Physical_Activity), write(', '),
-    write('sleep_quality = '), writeq(Sleep_Quality), write(', '),
-    write('region = '), writeq(Region), writeln(']).').
+candidato(Esempi,Classe,Att=Val) :-
+	a(Att, Valori),                  % un attributo
+	member(Val,Valori),              % un valore
+	adatto(Att=Val,Esempi,Classe).
 
-s(Label, Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-  Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, 
-  Physical_Activity, Sleep_Quality, Region) :-
-    e(Label, Age, Gender, Role, Industry, Yoe, Work_location, Hours_Worked_Per_Week, 
-      Work_Life_Balance, Stress_Level, Social_Isolation, Satisfaction_with_Remote_Work, 
-      Physical_Activity, Sleep_Quality, Region).
+adatto(AttVal,Esempi,Classe) :-
+	member(e(ClasseX,OggX),Esempi),	% esempio
+	ClasseX \== Classe,		% negativo
+	\+ soddisfa(OggX,[AttVal]), !.	% non soddisfatto dalla coppia Att=Val
+
+conta_pos([],_,0).
+conta_pos([e(ClasseX,_)|Esempi],Classe,N) :-
+	conta_pos(Esempi,Classe,N1),
+	(ClasseX=Classe,!,N is N1+1 ; N=N1).
+
+writelist([]).
+writelist([X|L]) :-
+	tab(2), writeq(X), nl,
+	writelist(L).
+
+classifica(Oggetto,Classe) :- % Oggetto descritto da una lista Att=Val appartiene a Classe
+	Classe <== Descrizione, % se Classe è una lista di liste Attx=Valx, di cui una è
+	member(CongiunzioneAttributi,Descrizione), % la lista CongiunzioneAttributi e
+	soddisfa(Oggetto,CongiunzioneAttributi). % questa soddisfa la lista Att=Val
+
+stampa_matrice_di_confusione :-
+	findall(Classe/Oggetto,s(Classe,Oggetto),TestSet),
+	length(TestSet,N),
+	valuta(TestSet,VN,0,VP,0,FN,0,FP,0,NC,0),
+	A is (VP + VN) / (N - NC), % Accuratezza
+	E is 1 - A,		   % Errore
+	write('Test effettuati :'),  writeln(N),
+	write('Test non classificati :'),  writeln(NC),
+	write('Veri Negativi  '), write(VN), write('   Falsi Positivi '), writeln(FP),
+	write('Falsi Negativi '), write(FN), write('   Veri Positivi  '), writeln(VP),
+	write('Accuratezza: '), writeln(A),
+	write('Errore: '), writeln(E).
+
+
+valuta([], VN, VN, VP, VP, FN, FN, FP, FP, NC, NC).
+
+% Classificazioni corrette
+valuta([depression/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, depression), !,
+    VNA1 is VNA + 1,
+    valuta(Coda, VN, VNA1, VP, VPA, FN, FNA, FP, FPA, NC, NCA).
+
+valuta([anxiety/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, anxiety), !,
+    VPA1 is VPA + 1,
+    valuta(Coda, VN, VNA, VP, VPA1, FN, FNA, FP, FPA, NC, NCA).
+
+valuta([burnout/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, burnout), !,
+    VNA1 is VNA + 1,
+    valuta(Coda, VN, VNA1, VP, VPA, FN, FNA, FP, FPA, NC, NCA).
+
+valuta([unknown/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, unknown), !,
+    NCA1 is NCA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA1).
+
+% Classificazioni errate
+% Oggetti depression classificati erroneamente
+valuta([depression/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, anxiety), !,
+    FNA1 is FNA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+
+valuta([depression/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, burnout), !,
+    FNA1 is FNA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+
+valuta([depression/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, unknown), !,
+    FPA1 is FPA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+
+% Oggetti anxiety classificati erroneamente
+valuta([anxiety/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, depression), !,
+    FPA1 is FPA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+
+valuta([anxiety/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, burnout), !,
+    FPA1 is FPA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+
+valuta([anxiety/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, unknown), !,
+    FPA1 is FPA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+
+% Oggetti burnout classificati erroneamente
+valuta([burnout/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, depression), !,
+    FNA1 is FNA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+
+valuta([burnout/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, anxiety), !,
+    FNA1 is FNA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+
+valuta([burnout/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, unknown), !,
+    FPA1 is FPA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+
+% Oggetti unknown classificati erroneamente
+valuta([unknown/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, depression), !,
+    FNA1 is FNA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+
+valuta([unknown/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, anxiety), !,
+    FNA1 is FNA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+
+valuta([unknown/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    classifica(Oggetto, burnout), !,
+    FNA1 is FNA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+
+% Caso generale: Non classificato
+valuta([_/_ | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+    NCA1 is NCA + 1,
+    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA1).
