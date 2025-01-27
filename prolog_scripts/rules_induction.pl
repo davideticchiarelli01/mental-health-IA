@@ -97,106 +97,125 @@ classifica(Oggetto,Classe) :- % Oggetto descritto da una lista Att=Val appartien
 stampa_matrice_di_confusione :-
 	findall(Classe/Oggetto,s(Classe,Oggetto),TestSet),
 	length(TestSet,N),
-	valuta(TestSet,VN,0,VP,0,FN,0,FP,0,NC,0),
-	A is (VP + VN) / (N - NC), % Accuratezza
+	valuta(TestSet, VD, 0, VA, 0, VB, 0, VU, 0, DA, 0, DB, 0, DU, 0, AD, 0, AB, 0, AU, 0, BD, 0, BA,0, BU,0, UD, 0, UA, 0, UB, 0, NC, 0),
+	A is (VD + VA + VB + VU) / (N - NC), % Accuratezza
 	E is 1 - A,		   % Errore
 	write('Test effettuati :'),  writeln(N),
 	write('Test non classificati :'),  writeln(NC),
-	write('Veri Negativi  '), write(VN), write('   Falsi Positivi '), writeln(FP),
-	write('Falsi Negativi '), write(FN), write('   Veri Positivi  '), writeln(VP),
+	write('Vero depression :'),  writeln(VD),
+	write('Vero anxiety :'),  writeln(VA),
+	write('Vero burnout :'),  writeln(VB),
+	write('Vero unknown :'),  writeln(VU),
+	write('Depression classificati come anxiety :'),  writeln(DA),
+	write('Depression classificati come burnout :'),  writeln(DB),
+	write('Depression classificati come unknown :'),  writeln(DU),
+	write('Anxiety classificati come depression :'),  writeln(AD),
+	write('Anxiety classificati come burnout :'),  writeln(AB),
+	write('Anxiety classificati come unknown :'),  writeln(AU),
+	write('Burnout classificati come depression :'),  writeln(BD),
+	write('Burnout classificati come anxiety :'),  writeln(BA),
+	write('Burnout classificati come unknown :'),  writeln(BU),
+	write('Unknown classificati come depression :'),  writeln(UD),
+	write('Unknown classificati come anxiety :'),  writeln(UA),
+	write('Unknown classificati come burnout :'),  writeln(UB),
 	write('Accuratezza: '), writeln(A),
 	write('Errore: '), writeln(E).
 
 
-valuta([], VN, VN, VP, VP, FN, FN, FP, FP, NC, NC).
+valuta([], VD, VD, VA, VA, VB, VB, VU, VU, DA, DA, DB, DB, DU, DU, AD, AD, AB, AB, AU, AU, BD, BD, BA, BA, BU, BU, UD, UD, UA, UA, UB, UB, NC, NC).
 
 % Classificazioni corrette
-valuta([depression/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([depression/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :-
     classifica(Oggetto, depression), !,
-    VNA1 is VNA + 1,
-    valuta(Coda, VN, VNA1, VP, VPA, FN, FNA, FP, FPA, NC, NCA).
+    VDA1 is VDA + 1,
+    valuta(Coda, VD, VDA1, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([anxiety/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([anxiety/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :-
     classifica(Oggetto, anxiety), !,
-    VPA1 is VPA + 1,
-    valuta(Coda, VN, VNA, VP, VPA1, FN, FNA, FP, FPA, NC, NCA).
+    VAA1 is VAA + 1,
+    valuta(Coda, VD, VDA, VA, VAA1, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([burnout/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([burnout/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :-
     classifica(Oggetto, burnout), !,
-    VNA1 is VNA + 1,
-    valuta(Coda, VN, VNA1, VP, VPA, FN, FNA, FP, FPA, NC, NCA).
+    VBA1 is VBA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA1, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([unknown/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([unknown/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :-
     classifica(Oggetto, unknown), !,
-    NCA1 is NCA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA1).
+    VUA1 is VUA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA1, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
+
 
 % Classificazioni errate
 % Oggetti depression classificati erroneamente
-valuta([depression/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([depression/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :-
     classifica(Oggetto, anxiety), !,
-    FNA1 is FNA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+    DAA1 is DAA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA1, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([depression/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([depression/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :-
     classifica(Oggetto, burnout), !,
-    FNA1 is FNA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+    DBA1 is DBA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA1, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([depression/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([depression/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :-
     classifica(Oggetto, unknown), !,
-    FPA1 is FPA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+    DUA1 is DUA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA1, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
+
 
 % Oggetti anxiety classificati erroneamente
-valuta([anxiety/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([anxiety/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :- 
     classifica(Oggetto, depression), !,
-    FPA1 is FPA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+    ADA1 is ADA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA1, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([anxiety/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([anxiety/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :- 
     classifica(Oggetto, burnout), !,
-    FPA1 is FPA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+    ABA1 is ABA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA1, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([anxiety/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([anxiety/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :- 
     classifica(Oggetto, unknown), !,
-    FPA1 is FPA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+    AUA1 is AUA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA1, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
+
 
 % Oggetti burnout classificati erroneamente
-valuta([burnout/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([burnout/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :- 
     classifica(Oggetto, depression), !,
-    FNA1 is FNA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+    BDA1 is BDA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA1, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([burnout/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([burnout/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :- 
     classifica(Oggetto, anxiety), !,
-    FNA1 is FNA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+    BAA1 is BAA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA1, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([burnout/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([burnout/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :- 
     classifica(Oggetto, unknown), !,
-    FPA1 is FPA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA1, NC, NCA).
+    BUA1 is BUA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA1, UD, UDA, UA, UAA, UB, UBA, NC, NCA).
+
 
 % Oggetti unknown classificati erroneamente
-valuta([unknown/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([unknown/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :- 
     classifica(Oggetto, depression), !,
-    FNA1 is FNA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+    UDA1 is UDA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA1, UA, UAA, UB, UBA, NC, NCA).
 
-valuta([unknown/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([unknown/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :- 
     classifica(Oggetto, anxiety), !,
-    FNA1 is FNA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+    UAA1 is UAA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA1, UB, UBA, NC, NCA).
 
-valuta([unknown/Oggetto | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([unknown/Oggetto | Coda],  VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :- 
     classifica(Oggetto, burnout), !,
-    FNA1 is FNA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA1, FP, FPA, NC, NCA).
+    UBA1 is UBA + 1,
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA1, NC, NCA).
+
 
 % Caso generale: Non classificato
-valuta([_/_ | Coda], VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA) :-
+valuta([_/_ | Coda], VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA) :-
     NCA1 is NCA + 1,
-    valuta(Coda, VN, VNA, VP, VPA, FN, FNA, FP, FPA, NC, NCA1).
+    valuta(Coda, VD, VDA, VA, VAA, VB, VBA, VU, VUA, DA, DAA, DB, DBA, DU, DUA, AD, ADA, AB, ABA, AU, AUA, BD, BDA, BA, BAA, BU, BUA, UD, UDA, UA, UAA, UB, UBA, NC, NCA1).

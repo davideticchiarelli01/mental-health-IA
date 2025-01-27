@@ -1,19 +1,17 @@
 import pandas as pd
 
 # Load the CSV file from the specified path
-csv = pd.read_csv(
+data = pd.read_csv(
     r"C:\Users\david\OneDrive\Documenti\GitHub\mental-health-IA\database_cleaned.csv")
 
-output_prolog = r"C:\Users\david\OneDrive\Documenti\GitHub\mental-health-IA\database_cleaned.pl"
+output_prolog_file = r"C:\Users\david\OneDrive\Documenti\GitHub\mental-health-IA\database_cleaned.pl"
 
-# Apri il file di output Prolog
-with open(output_prolog, "w") as file:
-    # Per ogni riga del DataFrame, crea un fatto Prolog
-    for index, row in csv.iterrows():
-        # Genera un fatto Prolog con i valori delle colonne
-        fatto = "aa(" + ", ".join([repr(val) for val in row]) + ").\n"
-        file.write(fatto)
+# Open the output Prolog file
+with open(output_prolog_file, "w") as file:
+    # Iterate over each row in the DataFrame and create a Prolog fact
+    for _, row in data.iterrows():
+        # Generate a Prolog fact using the column values
+        fact = "aa(" + ", ".join([repr(val) for val in row]) + ").\n"
+        file.write(fact)
 
-print(f"Okay, {output_prolog}")
-
-
+print(f"Okay, {output_prolog_file}")
