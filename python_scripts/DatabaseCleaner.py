@@ -4,8 +4,6 @@ import pandas as pd
 csv = pd.read_csv(
     r"C:\Users\david\OneDrive\Documenti\GitHub\mental-health-IA\database.csv")
 
-pd.set_option('display.max_columns', None)  # Display all columns
-
 # Drop the specified columns from the dataframe
 csv = csv.drop(
     columns=['Employee_ID',
@@ -56,6 +54,3 @@ csv = csv.fillna('Unknown')
 
 # Save the cleaned dataframe to a new CSV file
 csv.to_csv(r"C:\Users\david\OneDrive\Documenti\GitHub\mental-health-IA\database_cleaned.csv", index=False)
-
-# Mostra le prime righe del DataFrame aggiornato
-print(csv)

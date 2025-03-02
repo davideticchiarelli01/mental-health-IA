@@ -13,5 +13,3 @@ with open(output_prolog_file, "w") as file:
         # Generate a Prolog fact using the column values
         fact = "aa(" + ", ".join([repr(val) for val in row]) + ").\n"
         file.write(fact)
-
-print(f"Okay, {output_prolog_file}")
